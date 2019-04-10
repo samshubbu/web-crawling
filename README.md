@@ -24,3 +24,10 @@ you can install robo 3t for better UI experience for mongodb and there u need to
 localhost:27017
 ```
 After connecting u will see a database named web-crawling.
+
+Or with cmd you need to start mongo server after that u have to hit following commands
+```
+show dbs
+use web-crawling
+db.links.find({}).pretty()
+```
