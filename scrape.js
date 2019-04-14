@@ -37,14 +37,14 @@ var options = {
 
 const getLinks = async (url) => {
 
-    url != websiteUrl ? await linksInsertionToDb(url.replace(/\/$/, '')) : null;
+    url != websiteUrl ? linksInsertionToDb(url.replace(/\/$/, '')) : null;
     console.log(`Started Crawling ${url}`);
     return rp({ uri: url, ...options })
         .then(function ($) {
 
             $('body').find('a').each((i, el) => { // iterating on every href on the current html page
                 let href = $(el).attr('href').replace(/\/$/, '');
-                if (href != null && href != undefined && validUrl.test(href)) { // checking for valid url
+                if (href != null && href != undefined && validUrl.test(href) && href.includes('medium.com')) { // checking for valid url
                     linksArr.push(href);
                 }
             })
@@ -78,11 +78,17 @@ const linksInsertionToDb = async (url) => {
         paramKeys = queryParams.map(p => (p.split('=')[0])).filter(p => !!p); // getting params keys
     }
     const link = await Link.findOne({ url: parsedUrl[0] }).exec();
-    if (link) {
+    if (link && visitedUrl[parsedUrl[0]]) {
         (link.count == null || link.count == undefined) ? link.count = 0 : ''
         paramKeys ? link.params.addToSet(link.params.concat(paramKeys)) : ''
         link.count = visitedUrl[parsedUrl[0]]++;
         visitedUrl[parsedUrl[0]] = visitedUrl[parsedUrl[0]]++;
+        await link.save();
+    }
+    else if (link) {
+        (link.count == null || link.count == undefined) ? link.count = 0 : ''
+        paramKeys ? link.params.addToSet(link.params.concat(paramKeys)) : ''
+        link.count += 1;
         await link.save();
     }
     else if (visitedUrl[parsedUrl[0]]) {
